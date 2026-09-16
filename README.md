@@ -83,7 +83,7 @@ Los niveles de confianza disponibles son:
 Ramiro selecciona dos conejos al azar y utiliza sus pesos como extremos de su estimación:
 
 $$
-I_R=$(x_{\min},x_{\max})$
+I_R=[x_{\min},x_{\max}]
 $$
 
 El estudiante construye un intervalo de confianza para la media:
