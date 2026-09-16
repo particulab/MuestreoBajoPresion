@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EulerGames · Muestreo bajo presión</title>
+<style>
+:root{
+  --bg:#f4f7f2;
+  --panel:#ffffff;
+  --panel2:#eef5ec;
+  --line:#cdd8cb;
+  --text:#253229;
+  --muted:#647269;
+  --accent:#4f8f72;
+  --ok:#3f8a5b;
+  --bad:#c45a5a;
+  --warn:#d79a3b;
+  --coin:#d6a62a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(173, 214, 186, .28), transparent 28%),
+    linear-gradient(180deg,#f8fbf6,#eef4ec 48%,#f7f9f4);
+  color:var(--text);
+}
+header{
+  padding:22px 28px 14px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.62);
+  backdrop-filter:blur(6px);
+}
+header h1{margin:0;font-size:clamp(24px,3vw,38px)}
+header p{margin:8px 0 0;color:var(--muted);max-width:980px}
+main{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(320px,.8fr);
+  gap:18px;
+  padding:18px;
+}
+.card{
+  background:rgba(255,255,255,.96);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:0 12px 28px rgba(68, 89, 72, .10);
+}
+.card h2,.card h3{margin-top:0}
+.pad{padding:18px}
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:14px;
+}
+.badge{
+  padding:8px 12px;
+  border-radius:999px;
+  background:#f7faf6;
+  border:1px solid var(--line);
+  color:var(--muted);
+}
+.badge strong{color:var(--text)}
+.field{
+  position:relative;
+  height:540px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,255,255,.55),transparent 24%),
+    radial-gradient(circle at 80% 70%,rgba(211,235,202,.40),transparent 30%),
+    linear-gradient(#b9d99f,#a8cf8f);
+  border-radius:14px;
+  border:1px solid #8fb778;
+}
+.rabbit{
+  position:absolute;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.5);
+  background:#f8f5ef;
+  color:#26352b;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  user-select:none;
+  transition:.15s transform,.15s box-shadow,.15s opacity;
+  font-size:21px;
+}
+.rabbit:hover{transform:scale(1.08)}
+.rabbit.selected{
+  box-shadow:0 0 0 4px rgba(56,189,248,.35);
+  background:#b9e3cf;
+}
+.rabbit.ramiro{
+  box-shadow:0 0 0 4px rgba(245,158,11,.35);
+  background:#f3cf7b;
+}
+.rabbit.disabled{cursor:default;opacity:.7}
+.rabbit .w{
+  position:absolute;
+  top:45px;
+  left:50%;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:11px;
+  padding:3px 5px;
+  border-radius:5px;
+  background:#ffffff;
+  color:#33443a;
+  border:1px solid var(--line);
+}
+.note{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.45;
+}
+.shop{
+  display:grid;
+  gap:10px;
+}
+.shop button,.btn{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px 12px;
+  background:#f7faf6;
+  color:var(--text);
+  cursor:pointer;
+  font-weight:700;
+}
+.shop button:hover,.btn:hover{border-color:var(--accent)}
+.shop button:disabled,.btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.shop button.bought{
+  border-color:var(--ok);
+  background:rgba(63,138,91,.12);
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.statbox{
+  background:#f7faf6;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+}
+.statbox .label{font-size:12px;color:var(--muted)}
+.statbox .value{font-size:18px;font-weight:800;margin-top:3px}
+input[type="number"],select{
+  width:100%;
+  margin-top:6px;
+  padding:9px 10px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:#f7faf6;
+  color:var(--text);
+}
+hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+.feedback{
+  border-radius:12px;
+  padding:14px;
+  margin-top:12px;
+  background:#f7faf6;
+  border:1px solid var(--line);
+  line-height:1.5;
+}
+.feedback.win{border-color:var(--ok)}
+.feedback.lose{border-color:var(--bad)}
+.feedback.draw{border-color:var(--warn)}
+.small{font-size:12px;color:var(--muted)}
+.qq{
+  width:100%;
+  height:180px;
+  display:block;
+  margin-top:10px;
+  background:#f7faf6;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.numline{
+  width:100%;
+  height:245px;
+  display:block;
+  margin-top:10px;
+  background:#f7faf6;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.controls{
+  display:grid;
+  gap:10px;
+}
+.inline{
+  display:flex;
+  gap:8px;
+  align-items:end;
+}
+.inline > *{flex:1}
+@media (max-width:980px){
+  main{grid-template-columns:1fr}
+  .field{height:500px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Muestreo bajo presión</h1>
+  <p>Un minijuego de EulerGames: construye un intervalo de confianza para la media poblacional usando recursos limitados y trata de superar la estimación improvisada de Ramiro.</p>
+</header>
+
+<main>
+  <section>
+    <div class="topbar">
+      <div class="badge">Monedas: <strong id="coins">100</strong></div>
+      <div class="badge">Muestra: <strong id="nSample">0</strong></div>
+      <div class="badge">Costo por conejo: <strong>5</strong></div>
+      <div class="badge">Población: <strong id="popN">72</strong></div>
+    </div>
+
+    <div class="card pad">
+      <h2>1. Construye tu muestra</h2>
+      <p class="note">Haz clic sobre cualquier conejo para medirlo. Cada medición cuesta 5 monedas. El peso sólo aparece después de medirlo.</p>
+      <div id="field" class="field"></div>
+      <div style="margin-top:12px">
+        <button id="ramiroBtn" class="btn">Ramiro elige sus dos conejos</button>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:18px">
+      <h2>2. Datos de tu muestra</h2>
+      <div id="sampleList" class="note">Todavía no has medido individuos.</div>
+    </div>
+
+
+    <div class="card pad" style="margin-top:18px">
+          <h2>Comparación visual</h2>
+          <p class="note">Ambos intervalos comparten exactamente la misma recta numérica. Así puedes comparar directamente su posición y anchura. La media real sólo se revela después de evaluar.</p>
+          <canvas id="numlineCanvas" class="numline" width="420" height="245"></canvas>
+          <div class="small">Naranja: Ramiro · Verde: tu IC · Azul: media poblacional real</div>
+        </div>
+  </section>
+
+  <aside>
+    <div class="card pad">
+      <h2>3. Herramientas</h2>
+      <p class="note">Puedes comprar ayuda o calcular por tu cuenta. Comprar una herramienta consume monedas, pero evita hacer ese cálculo manualmente.</p>
+      <div class="shop">
+        <button data-buy="mean" data-cost="6" data-label="Comprar media muestral · 6">Comprar media muestral · 6</button>
+        <button data-buy="sd" data-cost="8" data-label="Comprar desviación estándar · 8">Comprar desviación estándar · 8</button>
+        <button data-buy="tcrit" data-cost="8" data-label="Comprar valor crítico t · 8">Comprar valor crítico t · 8</button>
+        <button data-buy="qq" data-cost="10" data-label="Comprar gráfico Q-Q · 10">Comprar gráfico Q-Q · 10</button>
+        <button data-buy="ci" data-cost="18" data-label="Comprar intervalo completo · 18">Comprar intervalo completo · 18</button>
+      </div>
+      <canvas id="qqCanvas" class="qq" width="320" height="180" hidden></canvas>
+    </div>
+
+    <div class="card pad" style="margin-top:18px">
+      <h2>4. Tu análisis</h2>
+      <div class="controls">
+        <label>Nivel de confianza
+          <select id="confidence">
+            <option value="0.90">90%</option>
+            <option value="0.95" selected>95%</option>
+            <option value="0.98">98%</option>
+            <option value="0.99">99%</option>
+          </select>
+        </label>
+
+        <label>Media muestral, x̄
+          <input type="number" id="meanInput" step="0.01" placeholder="Ingresa tu cálculo">
+        </label>
+
+        <label>Desviación estándar muestral, s
+          <input type="number" id="sdInput" step="0.01" min="0" placeholder="Ingresa tu cálculo">
+        </label>
+
+        <label>Valor crítico t
+          <input type="number" id="tInput" step="0.001" min="0" placeholder="Ingresa tu cálculo">
+        </label>
+
+        <div class="row">
+          <label>Límite inferior
+            <input type="number" id="lowInput" step="0.01" placeholder="LI">
+          </label>
+          <label>Límite superior
+            <input type="number" id="highInput" step="0.01" placeholder="LS">
+          </label>
+        </div>
+
+        <button id="evaluateBtn" class="btn">Evaluar propuesta</button>
+        <button id="resetBtn" class="btn">Nueva población</button>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:18px">
+      <h2>Ramiro</h2>
+      <div id="ramiroInfo" class="note">Todavía no ha elegido sus dos conejos.</div>
+    </div>
+<div class="card pad" style="margin-top:18px">
+      <h2>Resultado</h2>
+      <div id="feedback" class="note">Construye tu muestra y evalúa tu intervalo.</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+// ---------- Utilidades estadísticas ----------
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+function sampleSD(arr){
+  if(arr.length<2) return NaN;
+  const m=mean(arr);
+  return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1));
+}
+
+// Aproximación inversa normal (Acklam)
+function invNorm(p){
+  const a=[-39.6968302866538,220.946098424521,-275.928510446969,138.357751867269,-30.6647980661472,2.50662827745924];
+  const b=[-54.4760987982241,161.585836858041,-155.698979859887,66.8013118877197,-13.2806815528857];
+  const c=[-0.00778489400243029,-0.322396458041136,-2.40075827716184,-2.54973253934373,4.37466414146497,2.93816398269878];
+  const d=[0.00778469570904146,0.32246712907004,2.445134137143,3.75440866190742];
+  const plow=.02425, phigh=1-plow;
+  let q,r;
+  if(p<plow){
+    q=Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/
+           ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  if(p>phigh){
+    q=Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/
+            ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  q=p-.5; r=q*q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/
+         (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+
+// Aproximación Cornish-Fisher para t de Student, suficiente para juego educativo
+function tCritical(conf, df){
+  const p=1-(1-conf)/2;
+  const z=invNorm(p);
+  const z2=z*z, z3=z2*z, z5=z3*z2, z7=z5*z2;
+  const g1=(z3+z)/(4*df);
+  const g2=(5*z5+16*z3+3*z)/(96*df*df);
+  const g3=(3*z7+19*z5+17*z3-15*z)/(384*df**3);
+  return z+g1+g2+g3;
+}
+
+function randn(){
+  let u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+// ---------- Estado ----------
+const COST_SAMPLE=5;
+const POP_SIZE=72;
+let population=[];
+let selected=new Set();
+let coins=100;
+let ramiro=[];
+let purchases={mean:false,sd:false,tcrit:false,qq:false,ci:false};
+let locked=false;
+let revealedMean=null;
+
+const field=document.getElementById('field');
+const coinsEl=document.getElementById('coins');
+const nSampleEl=document.getElementById('nSample');
+const sampleList=document.getElementById('sampleList');
+const ramiroInfo=document.getElementById('ramiroInfo');
+const feedback=document.getElementById('feedback');
+const numlineCanvas=document.getElementById('numlineCanvas');
+
+function makePopulation(){
+  // Media y dispersión cambian cada partida.
+  const mu=4.0 + Math.random()*1.2;      // 4.0–5.2 kg
+  const sigma=0.38 + Math.random()*0.28; // 0.38–0.66 kg
+
+  population=Array.from({length:POP_SIZE},(_,i)=>{
+    let w=mu+sigma*randn();
+    w=clamp(w,2.4,6.7);
+    return {
+      id:i,
+      weight:+w.toFixed(2),
+      x:4+Math.random()*90,
+      y:5+Math.random()*82
+    };
+  });
+}
+
+function renderPopulation(){
+  field.innerHTML='';
+  population.forEach(r=>{
+    const el=document.createElement('div');
+    el.className='rabbit';
+    el.dataset.id=r.id;
+    el.style.left=r.x+'%';
+    el.style.top=r.y+'%';
+    el.textContent='🐇';
+    if(selected.has(r.id)) el.classList.add('selected');
+    if(ramiro.includes(r.id)) el.classList.add('ramiro');
+
+    if(selected.has(r.id) || ramiro.includes(r.id)){
+      const lab=document.createElement('div');
+      lab.className='w';
+      lab.textContent=r.weight.toFixed(2)+' kg';
+      el.appendChild(lab);
+    }
+
+    el.addEventListener('click',()=>measureRabbit(r.id));
+    field.appendChild(el);
+  });
+}
+
+function measureRabbit(id){
+  if(locked || selected.has(id) || ramiro.includes(id)) return;
+  if(coins<COST_SAMPLE){
+    feedback.className='feedback lose';
+    feedback.innerHTML='No tienes monedas suficientes para medir otro individuo.';
+    return;
+  }
+  coins-=COST_SAMPLE;
+  selected.add(id);
+  updateUI();
+}
+
+function updateUI(){
+  coinsEl.textContent=coins;
+  nSampleEl.textContent=selected.size;
+  renderPopulation();
+  renderSample();
+
+  document.querySelectorAll('[data-buy]').forEach(btn=>{
+    const key=btn.dataset.buy;
+    const cost=+btn.dataset.cost;
+    btn.disabled=locked || purchases[key] || coins<cost || selected.size<2;
+    btn.classList.toggle('bought',purchases[key]);
+    btn.textContent = purchases[key] ? 'Comprado ✓' : btn.dataset.label;
+  });
+
+  applyPurchasedValues();
+  drawNumberLine();
+}
+
+function getSample(){
+  return [...selected].map(id=>population[id].weight);
+}
+
+function renderSample(){
+  const s=getSample();
+  if(!s.length){
+    sampleList.textContent='Todavía no has medido individuos.';
+    return;
+  }
+  sampleList.innerHTML='<strong>Pesos medidos:</strong> '+s.map(x=>x.toFixed(2)).join(', ')+' kg';
+}
+
+function applyPurchasedValues(){
+  const s=getSample();
+  if(s.length<2) return;
+
+  const conf=+document.getElementById('confidence').value;
+  const m=mean(s), sd=sampleSD(s), t=tCritical(conf,s.length-1);
+  const me=t*sd/Math.sqrt(s.length);
+  const lo=m-me, hi=m+me;
+
+  if(purchases.mean) document.getElementById('meanInput').value=m.toFixed(3);
+  if(purchases.sd) document.getElementById('sdInput').value=sd.toFixed(3);
+  if(purchases.tcrit) document.getElementById('tInput').value=t.toFixed(3);
+  if(purchases.ci){
+    document.getElementById('meanInput').value=m.toFixed(3);
+    document.getElementById('sdInput').value=sd.toFixed(3);
+    document.getElementById('tInput').value=t.toFixed(3);
+    document.getElementById('lowInput').value=lo.toFixed(3);
+    document.getElementById('highInput').value=hi.toFixed(3);
+  }
+  if(purchases.qq) drawQQ(s);
+}
+
+function buyTool(btn){
+  const key=btn.dataset.buy;
+  const cost=+btn.dataset.cost;
+  if(selected.size<2 || purchases[key] || coins<cost || locked) return;
+  coins-=cost;
+  purchases[key]=true;
+  if(key==='qq') document.getElementById('qqCanvas').hidden=false;
+  updateUI();
+}
+
+document.querySelectorAll('[data-buy]').forEach(btn=>{
+  btn.addEventListener('click',()=>buyTool(btn));
+});
+
+document.getElementById('confidence').addEventListener('change',()=>{
+  applyPurchasedValues();
+  drawNumberLine();
+});
+['meanInput','sdInput','tInput','lowInput','highInput'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',drawNumberLine);
+});
+
+function getStudentIntervalFromInputs(){
+  const lo = parseFloat(document.getElementById('lowInput').value);
+  const hi = parseFloat(document.getElementById('highInput').value);
+  if(Number.isFinite(lo) && Number.isFinite(hi) && hi >= lo){
+    return {lo, hi};
+  }
+  return null;
+}
+
+function drawNumberLine(){
+  const canvas = numlineCanvas;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  // Logical drawing size in CSS pixels.
+  const W = Math.max(320, Math.round(rect.width));
+  const H = 245;
+
+  // High-resolution backing store to avoid blurred/stretched text.
+  const targetWidth = Math.round(W * dpr);
+  const targetHeight = Math.round(H * dpr);
+  if(canvas.width !== targetWidth || canvas.height !== targetHeight){
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#f7faf6';
+  ctx.fillRect(0,0,W,H);
+
+  const ram = (ramiro.length===2)
+    ? (() => {
+        const vals = ramiro.map(id=>population[id].weight).sort((a,b)=>a-b);
+        return {lo: vals[0], hi: vals[1]};
+      })()
+    : null;
+
+  const stu = getStudentIntervalFromInputs();
+
+  let values = [];
+  if(ram) values.push(ram.lo, ram.hi);
+  if(stu) values.push(stu.lo, stu.hi);
+  if(revealedMean !== null) values.push(revealedMean);
+
+  if(values.length === 0){
+    ctx.fillStyle = '#647269';
+    ctx.font = '14px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('La comparación aparecerá aquí.', W/2, 112);
+    ctx.font = '12px Inter, system-ui, sans-serif';
+    ctx.fillText('Primero deja que Ramiro elija sus conejos.', W/2, 134);
+    ctx.textAlign = 'left';
+    return;
+  }
+
+  // Shared numerical scale for every element in the graph.
+  let rawMin = Math.min(...values);
+  let rawMax = Math.max(...values);
+  let rawSpan = Math.max(rawMax - rawMin, 0.50);
+
+  // Choose a readable tick step and expand to clean limits.
+  const desiredStep = rawSpan / 5;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(desiredStep)));
+  const normalized = desiredStep / magnitude;
+  let niceNormalized;
+  if(normalized <= 1) niceNormalized = 1;
+  else if(normalized <= 2) niceNormalized = 2;
+  else if(normalized <= 2.5) niceNormalized = 2.5;
+  else if(normalized <= 5) niceNormalized = 5;
+  else niceNormalized = 10;
+
+  let step = niceNormalized * magnitude;
+  let min = Math.floor((rawMin - step) / step) * step;
+  let max = Math.ceil((rawMax + step) / step) * step;
+
+  if(max - min < 0.6){
+    const mid = (max + min)/2;
+    min = mid - 0.3;
+    max = mid + 0.3;
+    step = 0.1;
+  }
+
+  const left = 54;
+  const right = W - 28;
+  const axisY = 185;
+  const sx = x => left + ((x-min)/(max-min))*(right-left);
+
+  ctx.font = '11px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  const firstTick = Math.ceil(min/step)*step;
+  for(let v=firstTick; v<=max + step*0.001; v+=step){
+    const vv = +v.toFixed(10);
+    const x = sx(vv);
+
+    ctx.strokeStyle = '#e2e9df';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 42);
+    ctx.lineTo(x, axisY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#87998a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, axisY-6);
+    ctx.lineTo(x, axisY+7);
+    ctx.stroke();
+
+    ctx.fillStyle = '#526158';
+    ctx.fillText(vv.toFixed(2), x, axisY+11);
+  }
+
+  // Single real-number axis shared by both intervals.
+  ctx.strokeStyle = '#506056';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(left, axisY);
+  ctx.lineTo(right, axisY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(right, axisY);
+  ctx.lineTo(right-8, axisY-5);
+  ctx.moveTo(right, axisY);
+  ctx.lineTo(right-8, axisY+5);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(left, axisY);
+  ctx.lineTo(left+8, axisY-5);
+  ctx.moveTo(left, axisY);
+  ctx.lineTo(left+8, axisY+5);
+  ctx.stroke();
+
+  ctx.fillStyle = '#647269';
+  ctx.font = '11px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Peso (kg)', right, axisY+34);
+
+  function drawInterval(lo, hi, y, color, label){
+    const x1 = sx(lo), x2 = sx(hi);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.font = '700 13px Inter, system-ui, sans-serif';
+    ctx.fillText(label, left, y-19);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y-11); ctx.lineTo(x1, y+11);
+    ctx.moveTo(x2, y-11); ctx.lineTo(x2, y+11);
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.font = '700 11px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(lo.toFixed(2), x1, y-13);
+    ctx.fillText(hi.toFixed(2), x2, y-13);
+  }
+
+  if(ram) drawInterval(ram.lo, ram.hi, 78, '#d79a3b', 'Intervalo de Ramiro');
+  if(stu) drawInterval(stu.lo, stu.hi, 132, '#4f8f72', 'Tu intervalo de confianza');
+
+  if(revealedMean !== null){
+    const xm = sx(revealedMean);
+
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(xm, 38);
+    ctx.lineTo(xm, axisY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '700 12px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('μ = ' + revealedMean.toFixed(3), xm, 33);
+  }
+}
+
+function drawQQ(data){
+  const canvas=document.getElementById('qqCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#f7faf6';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if(data.length<3) return;
+  const xs=[...data].sort((a,b)=>a-b);
+  const theo=xs.map((_,i)=>invNorm((i+0.5)/xs.length));
+  const xmin=Math.min(...theo), xmax=Math.max(...theo);
+  const ymin=Math.min(...xs), ymax=Math.max(...xs);
+  const pad=26;
+
+  const sx=x=>pad+(x-xmin)/(xmax-xmin)*(canvas.width-2*pad);
+  const sy=y=>canvas.height-pad-(y-ymin)/(ymax-ymin)*(canvas.height-2*pad);
+
+  ctx.strokeStyle='#cdd8cb';
+  ctx.lineWidth=1;
+  ctx.strokeRect(pad,pad,canvas.width-2*pad,canvas.height-2*pad);
+
+  // línea de referencia por mínimos cuadrados
+  const mx=mean(theo), my=mean(xs);
+  const b=theo.reduce((s,x,i)=>s+(x-mx)*(xs[i]-my),0)/
+          theo.reduce((s,x)=>s+(x-mx)**2,0);
+  const a=my-b*mx;
+  ctx.strokeStyle='#4f8f72';
+  ctx.beginPath();
+  ctx.moveTo(sx(xmin),sy(a+b*xmin));
+  ctx.lineTo(sx(xmax),sy(a+b*xmax));
+  ctx.stroke();
+
+  ctx.fillStyle='#33443a';
+  theo.forEach((x,i)=>{
+    ctx.beginPath();
+    ctx.arc(sx(x),sy(xs[i]),3.4,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle='#647269';
+  ctx.font='11px sans-serif';
+  ctx.fillText('Cuantiles teóricos',105,173);
+}
+
+function chooseRamiro(){
+  if(locked || ramiro.length) return;
+  let ids=population.map(r=>r.id).filter(id=>!selected.has(id));
+  if(ids.length<2) return;
+  ids.sort(()=>Math.random()-.5);
+  ramiro=[ids[0],ids[1]];
+  updateRamiroInfo();
+  renderPopulation();
+  document.getElementById('ramiroBtn').disabled=true;
+}
+
+function updateRamiroInfo(){
+  if(ramiro.length<2) return;
+  const vals=ramiro.map(id=>population[id].weight).sort((a,b)=>a-b);
+  const width=vals[1]-vals[0];
+  ramiroInfo.innerHTML=
+    `Ramiro eligió <strong>${vals[0].toFixed(2)} kg</strong> y <strong>${vals[1].toFixed(2)} kg</strong>.<br>
+     Su propuesta es: <strong>[${vals[0].toFixed(2)}, ${vals[1].toFixed(2)}] kg</strong>.<br>
+     Anchura: <strong>${width.toFixed(2)} kg</strong>.`;
+}
+
+document.getElementById('ramiroBtn').addEventListener('click',chooseRamiro);
+
+function closeEnough(a,b,tol){
+  return Math.abs(a-b)<=tol;
+}
+
+function evaluate(){
+  if(locked) return;
+  if(selected.size<2){
+    feedback.className='feedback lose';
+    feedback.textContent='Necesitas medir al menos dos individuos.';
+    return;
+  }
+  if(ramiro.length<2){
+    feedback.className='feedback lose';
+    feedback.textContent='Primero deja que Ramiro elija sus dos conejos.';
+    return;
+  }
+
+  const s=getSample();
+  const conf=+document.getElementById('confidence').value;
+  const trueMean=mean(population.map(r=>r.weight));
+  revealedMean=trueMean;
+  const m=mean(s), sd=sampleSD(s), t=tCritical(conf,s.length-1);
+  const me=t*sd/Math.sqrt(s.length);
+  const trueLo=m-me, trueHi=m+me;
+
+  const enteredMean=+document.getElementById('meanInput').value;
+  const enteredSD=+document.getElementById('sdInput').value;
+  const enteredT=+document.getElementById('tInput').value;
+  const enteredLo=+document.getElementById('lowInput').value;
+  const enteredHi=+document.getElementById('highInput').value;
+
+  const vals=[enteredMean,enteredSD,enteredT,enteredLo,enteredHi];
+  if(vals.some(v=>Number.isNaN(v))){
+    feedback.className='feedback lose';
+    feedback.textContent='Completa todos los valores de tu análisis antes de evaluar.';
+    return;
+  }
+
+  const calcOK=
+    closeEnough(enteredMean,m,0.03) &&
+    closeEnough(enteredSD,sd,0.03) &&
+    closeEnough(enteredT,t,0.03) &&
+    closeEnough(enteredLo,trueLo,0.04) &&
+    closeEnough(enteredHi,trueHi,0.04);
+
+  if(!calcOK){
+    feedback.className='feedback lose';
+    feedback.innerHTML=
+      `<strong>Hay un problema en los cálculos.</strong><br>
+       Revisa x̄, s, t y los límites del intervalo antes de decidir si tu propuesta supera a Ramiro.`;
+    return;
+  }
+
+  const rvals=ramiro.map(id=>population[id].weight).sort((a,b)=>a-b);
+  const rLo=rvals[0], rHi=rvals[1];
+  const rWidth=rHi-rLo;
+  const stuWidth=trueHi-trueLo;
+
+  const stuCovers=trueMean>=trueLo && trueMean<=trueHi;
+  const rCovers=trueMean>=rLo && trueMean<=rHi;
+
+  let outcome, cls;
+  if(stuCovers && (!rCovers || stuWidth<rWidth)){
+    outcome='🏆 Ganaste';
+    cls='win';
+  }else if(!stuCovers && !rCovers){
+    outcome='⚖️ Nadie gana';
+    cls='draw';
+  }else{
+    outcome='Ramiro gana esta ronda';
+    cls='lose';
+  }
+
+  feedback.className='feedback '+cls;
+  feedback.innerHTML=
+    `<strong>${outcome}</strong><br><br>
+     Media real de la población: <strong>${trueMean.toFixed(3)} kg</strong><br>
+     Tu IC ${(conf*100).toFixed(0)}%: <strong>[${trueLo.toFixed(3)}, ${trueHi.toFixed(3)}]</strong> kg<br>
+     Anchura de tu intervalo: <strong>${stuWidth.toFixed(3)} kg</strong><br>
+     ¿Contiene la media real? <strong>${stuCovers?'Sí':'No'}</strong><br><br>
+     Ramiro: <strong>[${rLo.toFixed(3)}, ${rHi.toFixed(3)}]</strong> kg<br>
+     Anchura de Ramiro: <strong>${rWidth.toFixed(3)} kg</strong><br>
+     ¿Contiene la media real? <strong>${rCovers?'Sí':'No'}</strong><br><br>
+     Monedas restantes: <strong>${coins}</strong>.`;
+
+  locked=true;
+  updateUI();
+  drawNumberLine();
+}
+
+document.getElementById('evaluateBtn').addEventListener('click',evaluate);
+
+function resetGame(){
+  selected=new Set();
+  coins=100;
+  ramiro=[];
+  purchases={mean:false,sd:false,tcrit:false,qq:false,ci:false};
+  locked=false;
+  revealedMean=null;
+
+  ['meanInput','sdInput','tInput','lowInput','highInput'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('confidence').value='0.95';
+  document.getElementById('qqCanvas').hidden=true;
+  document.getElementById('ramiroBtn').disabled=false;
+  ramiroInfo.textContent='Todavía no ha elegido sus dos conejos.';
+  feedback.className='note';
+  feedback.textContent='Construye tu muestra y evalúa tu intervalo.';
+  makePopulation();
+  updateUI();
+}
+document.getElementById('resetBtn').addEventListener('click',resetGame);
+
+
+window.addEventListener('resize', ()=>{
+  drawNumberLine();
+});
+
+// Inicio
+makePopulation();
+updateUI();
+drawNumberLine();
+</script>
+</body>
+</html>
